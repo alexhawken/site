@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Legend of Stagshold</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Cinzel:wght@400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .container {
+            position: relative;
+        }
+
+        /* Raycast-style timeline */
+        .timeline-progress {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 80vh;
+            justify-content: space-between;
+        }
+
+        .progress-line {
+            position: absolute;
+            width: 2px;
+            height: calc(100% - 20px);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 1px;
+            top: 10px;
+        }
+
+        .progress-active-line {
+            position: absolute;
+            width: 2px;
+            background: #ffffff;
+            border-radius: 1px;
+            top: 10px;
+            transition: height 0.3s ease;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+        }
+
+        .progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            z-index: 3;
+            border: 2px solid transparent;
+        }
+
+        .progress-dot.active {
+            background: #ffffff;
+            border-color: #ffffff;
+            transform: scale(1.3);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+        }
+
+        .progress-dot.completed {
+            background: rgba(255, 255, 255, 0.6);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .page {
+            min-height: 100vh;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+            position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .page.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .page-content {
+            max-width: 700px;
+            text-align: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        .event-number {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 1rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .event-title {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(3rem, 6vw, 5rem);
+            font-weight: 600;
+            margin-bottom: 2rem;
+            line-height: 1.1;
+            color: #ffffff;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            letter-spacing: 1px;
+        }
+
+        .event-description {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 2rem;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+            font-weight: 400;
+        }
+
+        .event-location {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 500;
+            margin-top: 2rem;
+        }
+
+        .event-image {
+            width: 120px;
+            height: 120px;
+            margin: 2rem auto;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Character name styling with high contrast */
+        .stern { color: #90EE90; font-weight: 700; }
+        .magic-mick { color: #87CEEB; font-weight: 700; }
+        .zaha { color: #FFD700; font-weight: 700; }
+        .gerolde { color: #FFA07A; font-weight: 700; }
+
+        /* Hero Page */
+        .hero-page {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            padding: 4rem 2rem;
+            height: 100vh;
+        }
+
+        .hero-content h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: clamp(4rem, 8vw, 8rem);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #ffffff;
+            line-height: 0.85;
+            text-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
+            letter-spacing: -2px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 3rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        .party-members {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .member {
+            padding: 1.5rem 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .member:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .member h3 {
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+            font-weight: 600;
+        }
+
+        .member p {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            font-weight: 400;
+        }
+
+        /* Enhanced gradients for chapter backgrounds */
+        .invitation-page { background: linear-gradient(135deg, #654321 0%, #8b4513 50%, #a0522d 100%); }
+        .fire-page { background: linear-gradient(135deg, #8B0000 0%, #dc143c 50%, #ff4500 100%); }
+        .journey-page { background: linear-gradient(135deg, #2F4F2F 0%, #228b22 50%, #32cd32 100%); }
+        .death-page { background: linear-gradient(135deg, #2F0000 0%, #8b0000 50%, #a00000 100%); }
+        .revival-page { background: linear-gradient(135deg, #1E3A8A 0%, #3b82f6 50%, #60a5fa 100%); }
+        .bandits-page { background: linear-gradient(135deg, #4A4A4A 0%, #6b7280 50%, #9ca3af 100%); }
+        .staglord-page { background: linear-gradient(135deg, #4B0082 0%, #8a2be2 50%, #9370db 100%); }
+        .victory-page { background: linear-gradient(135deg, #B8860B 0%, #daa520 50%, #ffd700 100%); }
+        .spider-page { background: linear-gradient(135deg, #3C1810 0%, #654321 50%, #8b4513 100%); }
+        .attack-page { background: linear-gradient(135deg, #8B1538 0%, #dc143c 50%, #ff1493 100%); }
+        .settlement-page { background: linear-gradient(135deg, #1E6091 0%, #4682b4 50%, #87ceeb 100%); }
+        .chase-page { background: linear-gradient(135deg, #505050 0%, #708090 50%, #b0c4de 100%); }
+        .portal-page { background: linear-gradient(135deg, #6A0DAD 0%, #9932cc 50%, #ba55d3 100%); }
+        .dimension-page { background: linear-gradient(135deg, #008B8B 0%, #20b2aa 50%, #48d1cc 100%); }
+        .tower-page { background: linear-gradient(135deg, #663399 0%, #9370db 50%, #dda0dd 100%); }
+        .death2-page { background: linear-gradient(135deg, #4B0000 0%, #800000 50%, #b22222 100%); }
+        .reality-page { background: linear-gradient(135deg, #191970 0%, #4169e1 50%, #6495ed 100%); }
+
+        .scroll-hint {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: bounce 3s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-6px); }
+            60% { transform: translateX(-50%) translateY(-3px); }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .timeline-progress {
+                right: 1rem;
+                height: 70vh;
+            }
+
+            .progress-dot {
+                width: 6px;
+                height: 6px;
+            }
+
+            .page {
+                padding: 2rem 1rem;
+            }
+
+            .party-members {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .hero-content h1 {
+                font-size: clamp(3rem, 10vw, 5rem);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .timeline-progress {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Raycast-style Timeline Progress -->
+        <div class="timeline-progress">
+            <div class="progress-line"></div>
+            <div class="progress-active-line"></div>
+            <div class="progress-dot active" data-page="0"></div>
+            <div class="progress-dot" data-page="1"></div>
+            <div class="progress-dot" data-page="2"></div>
+            <div class="progress-dot" data-page="3"></div>
+            <div class="progress-dot" data-page="4"></div>
+            <div class="progress-dot" data-page="5"></div>
+            <div class="progress-dot" data-page="6"></div>
+            <div class="progress-dot" data-page="7"></div>
+            <div class="progress-dot" data-page="8"></div>
+            <div class="progress-dot" data-page="9"></div>
+            <div class="progress-dot" data-page="10"></div>
+            <div class="progress-dot" data-page="11"></div>
+            <div class="progress-dot" data-page="12"></div>
+            <div class="progress-dot" data-page="13"></div>
+            <div class="progress-dot" data-page="14"></div>
+            <div class="progress-dot" data-page="15"></div>
+            <div class="progress-dot" data-page="16"></div>
+        </div>
+
+        <!-- Hero Page -->
+        <div class="page hero-page visible">
+            <div class="page-content hero-content">
+                <h1>The Legend of Stagshold</h1>
+                <p class="hero-subtitle">A Tale of Adventure, Death, and Conquest</p>
+                
+                <div class="party-members">
+                    <div class="member">
+                        <h3 class="stern">Stern</h3>
+                        <p>The Chronicler</p>
+                    </div>
+                    <div class="member">
+                        <h3 class="magic-mick">Money Mick</h3>
+                        <p>Lots of Micks</p>
+                    </div>
+                    <div class="member">
+                        <h3 class="zaha">Zaha</h3>
+                        <p>The Mushroom</p>
+                    </div>
+                    <div class="member">
+                        <h3 class="gerolde">Gerolde</h3>
+                        <p>The Short One</p>
+                    </div>
+                </div>
+            </div>
+            <div class="scroll-hint">Scroll to begin our story</div>
+        </div>
+
+        <!-- Chapter 1: Lady Jamunde's Invitation -->
+        <div class="page invitation-page">
+            <div class="page-content">
+                <div class="event-number">Chapter One</div>
+                <h2 class="event-title">Lady Jamunde's Invitation</h2>
+                <div class="event-image">🏰</div>
+                <p class="event-description">
+                    The party receives a prestigious invitation from Lady Jamunde, one of the esteemed leaders of South Brevoy. Along with many other brave adventurers, <span class="stern">Stern</span>, <span class="magic-mick">Money Mick</span>, <span class="zaha">Zaha</span>, and <span class="gerolde">Gerolde</span> gather for an evening of fine drinks and sumptuous food, believing this to be the beginning of a grand adventure.
+                </p>
+                <div class="event-location">South Brevoy</div>
+            </div>
+        </div>
+
+        <!-- Chapter 2: Fire and Escape -->
+        <div class="page fire-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Two</div>
+                <h2 class="event-title">Fire and Escape</h2>
+                <div class="event-image">🔥</div>
+                <p class="event-description">
+                    Disaster strikes in the dead of night when bandits set the meeting hall ablaze while everyone sleeps! The party helps fight off the attackers in the chaos and confusion, barely escaping with their lives. From the ashes of this tragedy, Lady Jamunde entrusts them with a crucial mission: to bring order to the lawless 'Stolen Lands'.
+                </p>
+                <div class="event-location">South Brevoy</div>
+            </div>
+        </div>
+
+        <!-- Chapter 3: Journey to the Stolen Lands -->
+        <div class="page journey-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Three</div>
+                <h2 class="event-title">Journey to the Stolen Lands</h2>
+                <div class="event-image">🗺️</div>
+                <p class="event-description">
+                    With their mission clearly defined, <span class="stern">Stern</span>, <span class="magic-mick">Money Mick</span>, <span class="zaha">Zaha</span>, and <span class="gerolde">Gerolde</span> set forth on the perilous journey southward. The Stolen Lands await - a realm of untamed wilderness, ancient mysteries, and countless dangers. They travel with hope in their hearts, unaware of the brutal trials ahead.
+                </p>
+                <div class="event-location">The Road South</div>
+            </div>
+        </div>
+
+        <!-- Chapter 4: The Boar Massacre -->
+        <div class="page death-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Four</div>
+                <h2 class="event-title">The Boar Massacre</h2>
+                <div class="event-image">🐗</div>
+                <p class="event-description">
+                    The party's first taste of the Stolen Lands' brutality comes swift and merciless. A pack of wild boars falls upon them with savage fury. In the brutal battle that follows, everyone except <span class="zaha">Zaha</span> is slain - <span class="stern">Stern</span>, <span class="magic-mick">Money Mick</span>, and <span class="gerolde">Gerolde</span> all fall to the beasts. Only Zaha survives to tell the tale of their tragic defeat.
+                </p>
+                <div class="event-location">The Stolen Lands</div>
+            </div>
+        </div>
+
+        <!-- Chapter 5: New Heroes Rise -->
+        <div class="page revival-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Five</div>
+                <h2 class="event-title">New Heroes Rise</h2>
+                <div class="event-image">⚡</div>
+                <p class="event-description">
+                    Through means both mysterious and miraculous, new heroes emerge to continue the quest alongside <span class="zaha">Zaha</span>. <span class="stern">Stern</span>, <span class="magic-mick">Money Mick</span>, and <span class="gerolde">Gerolde</span> are all fresh adventurers joining the cause. Together, this new party encounters Oleg, a humble trader whose wisdom proves invaluable to their survival and mission.
+                </p>
+                <div class="event-location">Oleg's Trading Post</div>
+            </div>
+        </div>
+
+        <!-- Chapter 6: Marsh Exploration -->
+        <div class="page bandits-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Six</div>
+                <h2 class="event-title">Marsh Exploration</h2>
+                <div class="event-image">🌿</div>
+                <p class="event-description">
+                    The party ventures into the treacherous marshlands, fighting off dangerous beasts and scattered bandits. <span class="stern">Stern</span>, <span class="magic-mick">Money Mick</span>, <span class="zaha">Zaha</span>, and <span class="gerolde">Gerolde</span> explore the murky terrain, testing their skills against the wild creatures that lurk in the swampy depths.
+                </p>
+                <div class="event-location">The Marshlands</div>
+            </div>
+        </div>
+
+        <!-- Chapter 7: The Stag Lord's Reign -->
+        <div class="page staglord-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Seven</div>
+                <h2 class="event-title">The Stag Lord's Reign</h2>
+                <div class="event-image">👑</div>
+                <p class="event-description">
+                    The truth is revealed: the majority of bandit activity flows from one source - the Stag Lord, a tyrannical bandit king whose iron fist keeps much of the Stolen Lands in chaos. The party formulates their most daring plan yet: to end his reign and claim his stronghold.
+                </p>
+                <div class="event-location">Intelligence Gathering</div>
+            </div>
+        </div>
+
+        <!-- Chapter 8: Victory & Founding Stagshold -->
+        <div class="page victory-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Eight</div>
+                <h2 class="event-title">Victory & Founding Stagshold</h2>
+                <div class="event-image">🏰</div>
+                <p class="event-description">
+                    Approaching the fortress, the party encounters Shamblini - a fearsome plant monster. <span class="zaha">Zaha</span>, using his druidic connection to nature, speaks with the creature and convinces it that there is more food to be found at the bandit camp. Together, they storm the stronghold and defeat the Stag Lord. Using his fort as their home base, they establish the new settlement of Stagshold.
+                </p>
+                <div class="event-location">Stagshold Founded</div>
+            </div>
+        </div>
+
+        <!-- Chapter 9: The Spider in the Basement -->
+        <div class="page spider-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Nine</div>
+                <h2 class="event-title">The Spider in the Basement</h2>
+                <div class="event-image">🕷️</div>
+                <p class="event-description">
+                    While exploring the depths of the conquered Stag Lord's fortress, the party discovers a half-spider, half-man creature lurking in the basement. Through careful negotiation, they manage to befriend this strange being, who introduces himself as Naugrah, adding an unexpected ally to their growing influence.
+                </p>
+                <div class="event-location">Stagshold Basement</div>
+            </div>
+        </div>
+
+        <!-- Chapter 10: Naugrah's Betrayal -->
+        <div class="page attack-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Ten</div>
+                <h2 class="event-title">Naugrah's Betrayal</h2>
+                <div class="event-image">⚔️</div>
+                <p class="event-description">
+                    Upon returning from their explorations, the party discovers that Naugrah - the same creature they had befriended - has viciously attacked one of their trusted generals. The betrayal cuts deep, as their supposed ally reveals his true nature and threatens the stability of their newly established rule.
+                </p>
+                <div class="event-location">Stagshold</div>
+            </div>
+        </div>
+
+        <!-- Chapter 11: The Settlement of Tatslefod -->
+        <div class="page settlement-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Eleven</div>
+                <h2 class="event-title">The Settlement of Tatslefod</h2>
+                <div class="event-image">🏘️</div>
+                <p class="event-description">
+                    While dealing with the Naugrah crisis, some of the townspeople approach the party with a proposal to establish a new settlement called Tatslefod. The party must balance their expanding responsibilities as rulers while managing the growing needs of their people and hunting down their betrayer.
+                </p>
+                <div class="event-location">The Expanding Territory</div>
+            </div>
+        </div>
+
+        <!-- Chapter 12: The Chase to the Troll Kingdom -->
+        <div class="page chase-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Twelve</div>
+                <h2 class="event-title">The Chase to the Troll Kingdom</h2>
+                <div class="event-image">🏃</div>
+                <p class="event-description">
+                    The hunt for Naugrah begins in earnest. <span class="stern">Stern</span>, <span class="magic-mick">Money Mick</span>, <span class="zaha">Zaha</span>, and <span class="gerolde">Gerolde</span> track the spider creature across treacherous terrain, encountering various lizard folk along the way. Their pursuit leads them to the mysterious Troll Kingdom, where Naugrah flees to a strange portal hidden in the basement depths.
+                </p>
+                <div class="event-location">The Troll Kingdom</div>
+            </div>
+        </div>
+
+        <!-- Chapter 13: The Portal Dimension -->
+        <div class="page portal-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Thirteen</div>
+                <h2 class="event-title">The Portal Dimension</h2>
+                <div class="event-image">🚪</div>
+                <p class="event-description">
+                    Following Naugrah through the portal, the party finds themselves in a strange dimension filled with countless doors. This otherworldly realm defies comprehension, with doorways leading to unknown destinations. A mysterious entity grants them a key, and they choose one of the doors, stepping through into a vast world of endless sand.
+                </p>
+                <div class="event-location">The Door Dimension</div>
+            </div>
+        </div>
+
+        <!-- Chapter 14: The Wizard's Tower -->
+        <div class="page dimension-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Fourteen</div>
+                <h2 class="event-title">The Wizard's Tower</h2>
+                <div class="event-image">🏜️</div>
+                <p class="event-description">
+                    In this sand world, any being from another dimension leaves a faint mark. Following these traces, the party encounters a powerful wizard who reveals he had imprisoned Naugrah. However, the spider creature has escaped deeper into the wizard's tower - a legendary, ever-standing dangerous dungeon known to be far larger inside than it appears from without.
+                </p>
+                <div class="event-location">The Sand World</div>
+            </div>
+        </div>
+
+        <!-- Chapter 15: The Null Rod -->
+        <div class="page tower-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Fifteen</div>
+                <h2 class="event-title">The Null Rod</h2>
+                <div class="event-image">⚡</div>
+                <p class="event-description">
+                    The party explores the tower in search of the Null Rod - the true reason for Naugrah's presence here. This legendary artifact allows its wielder to bend reality to their will. They discover a temple where the rod is stored, but the ancient guardians prove too powerful, striking down the entire party before they can claim their prize.
+                </p>
+                <div class="event-location">The Temple Guardian</div>
+            </div>
+        </div>
+
+        <!-- Chapter 16: Reality Altered -->
+        <div class="page reality-page">
+            <div class="page-content">
+                <div class="event-number">Chapter Sixteen</div>
+                <h2 class="event-title">Reality Altered</h2>
+                <div class="event-image">🌀</div>
+                <p class="event-description">
+                    Death does not claim them. Instead, the party awakens back in the door dimension, but something is wrong. The dimension begins warping and collapsing around them, forcibly returning them to their settlement of Stagshold. However, they quickly realize that reality itself has been altered - the world they return to is not quite the same as the one they left behind.
+                </p>
+                <div class="event-location">Stagshold - Changed</div>
+            </div>
+        </div>
+
+        <!-- Coming Soon Page -->
+        <div class="page" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);">
+            <div class="page-content">
+                <div class="event-number">To Be Continued...</div>
+                <h2 class="event-title">More Coming Soon</h2>
+                <div class="event-image">📖</div>
+                <p class="event-description">
+                    The legend continues to unfold as our heroes navigate this altered reality. New chapters of adventure, danger, and mystery await as the true consequences of their interdimensional journey become clear.
+                </p>
+                <div class="event-location">The Adventure Continues</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const pages = document.querySelectorAll('.page');
+        const progressDots = document.querySelectorAll('.progress-dot');
+        const progressActiveLine = document.querySelector('.progress-active-line');
+        let currentPage = 0;
+
+        function updateProgress() {
+            const scrollTop = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const docHeight = document.documentElement.scrollHeight - windowHeight;
+            
+            const progress = Math.min(scrollTop / docHeight, 1);
+            const pageIndex = Math.min(Math.floor(progress * pages.length), pages.length - 1);
+            
+            if (pageIndex !== currentPage) {
+                currentPage = pageIndex;
+                
+                // Update progress dots
+                progressDots.forEach((dot, index) => {
+                    dot.classList.remove('active', 'completed');
+                    if (index === currentPage) {
+                        dot.classList.add('active');
+                    } else if (index < currentPage) {
+                        dot.classList.add('completed');
+                    }
+                });
+                
+                // Update active line height
+                const totalHeight = progressDots[progressDots.length - 1].offsetTop - progressDots[0].offsetTop;
+                const activeHeight = currentPage > 0 ? (currentPage / (progressDots.length - 1)) * totalHeight : 0;
+                progressActiveLine.style.height = activeHeight + 'px';
+                
+                // Update page visibility
+                pages.forEach((page, index) => {
+                    const distanceFromCurrent = Math.abs(index - currentPage);
+                    if (distanceFromCurrent <= 1) {
+                        page.classList.add('visible');
+                    } else {
+                        page.classList.remove('visible');
+                    }
+                });
+            }
+        }
+
+        function scrollToPage(pageIndex) {
+            const targetPage = pages[pageIndex];
+            if (targetPage) {
+                targetPage.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Progress dot click handlers
+        progressDots.forEach((dot, index) => {
+            dot.addEventListener('click', () => scrollToPage(index));
+        });
+
+        // Throttled scroll handler
+        let ticking = false;
+        function handleScroll() {
+            if (!ticking) {
+                requestAnimationFrame(() => {
+                    updateProgress();
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        }
+
+        window.addEventListener('scroll', handleScroll);
+        updateProgress(); // Initial call
+    </script>
+</body>
+</html>
